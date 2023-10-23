@@ -1,4 +1,5 @@
 
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using MovieAPI.Models;
@@ -18,6 +19,7 @@ namespace MovieAPI.Controllers
 
         // GET: api/films
         [HttpGet]
+        [Authorize]
         public async Task<ActionResult<IEnumerable<Movie>>> GetMovies()
         {
           if (_context.Movies == null)
