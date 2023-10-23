@@ -11,4 +11,6 @@ public class MovieContext : DbContext
     //     => optionsBuilder.UseNpgsql
     //         ("host=localhost;Port=7777;Username=postgres;Password=0814;Database=movie;");
     public DbSet<Movie> Movies { get; set; } = null!;
+    
+    public DbSet<User> Users { get; set; } = null!;
 }
