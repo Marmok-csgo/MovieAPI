@@ -27,10 +27,11 @@ namespace MovieAPI.Controllers
         {
             string passwordHash
                 = BCrypt.Net.BCrypt.HashPassword(request.Password);
-
+            
             user.UserName = request.UserName;
             user.PasswordHash = passwordHash;
-
+            user.Role = _movieContext.Roles.FirstOrDefault(role => role.Name == "Client");
+            
             _movieContext.Users.Add(user);
             _movieContext.SaveChanges();
             
@@ -40,7 +41,7 @@ namespace MovieAPI.Controllers
         [HttpPost("login")]
         public ActionResult<User> Login(UserDto request)
         {
-            var user = _movieContext.Users.Where(user => user.UserName == request.UserName).FirstOrDefault();
+            var user = _movieContext.Users.Where(u => u.UserName == request.UserName).FirstOrDefault();
             if (user == null)
             {
                 return BadRequest("User not found");
@@ -58,9 +59,11 @@ namespace MovieAPI.Controllers
 
         private string CreateToken(User user)
         {
+            string roleName = _movieContext.Roles.FirstOrDefault(r => r.Id == user.RoleId).Name;
+            
             List<Claim> claims = new List<Claim>{
                 new Claim(ClaimTypes.Name, user.UserName),
-                // new Claim(ClaimTypes.Role, user.RoleName)
+                new Claim(ClaimTypes.Role, roleName)
             };
 
             var key = new SymmetricSecurityKey(Encoding.UTF8

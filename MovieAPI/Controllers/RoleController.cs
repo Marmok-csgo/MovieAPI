@@ -7,57 +7,56 @@ namespace MovieAPI.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class MovieController : ControllerBase
+    [Authorize(Roles = "Admin")]
+    public class RoleController : ControllerBase
     {
         private readonly MovieContext _context;
 
-        public MovieController(MovieContext context)
+        public RoleController(MovieContext context)
         {
             _context = context;
         }
 
-        // GET: api/films
+        // GET: api/Role
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Movie>>> GetMovies()
+        public async Task<ActionResult<IEnumerable<Role>>> GetRoles()
         {
-          if (_context.Movies == null)
+          if (_context.Roles == null)
           {
               return NotFound();
           }
-            return await _context.Movies.ToListAsync();
+            return await _context.Roles.ToListAsync();
         }
 
-        // GET: api/Movie/5
+        // GET: api/Role/5
         [HttpGet("{id}")]
-        public async Task<ActionResult<Movie>> GetMovie(long id)
+        public async Task<ActionResult<Role>> GetUserRole(long id)
         {
-          if (_context.Movies == null)
+          if (_context.Roles == null)
           {
               return NotFound();
           }
-            var movie = await _context.Movies.FindAsync(id);
+            var userRole = await _context.Roles.FindAsync(id);
 
-            if (movie == null)
+            if (userRole == null)
             {
                 return NotFound();
             }
 
-            return movie;
+            return userRole;
         }
-        
 
-        // PUT: api/Movie/5
+        // PUT: api/Role/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPut("{id}")]
-        [Authorize(Roles = "Admin")]
-        public async Task<IActionResult> PutMovie(long id, Movie movie)
+        public async Task<IActionResult> PutUserRole(long id, Role userRole)
         {
-            if (id != movie.Id)
+            if (id != userRole.Id)
             {
                 return BadRequest();
             }
 
-            _context.Entry(movie).State = EntityState.Modified;
+            _context.Entry(userRole).State = EntityState.Modified;
 
             try
             {
@@ -65,7 +64,7 @@ namespace MovieAPI.Controllers
             }
             catch (DbUpdateConcurrencyException)
             {
-                if (!MovieExists(id))
+                if (!UserRoleExists(id))
                 {
                     return NotFound();
                 }
@@ -78,42 +77,44 @@ namespace MovieAPI.Controllers
             return NoContent();
         }
 
-        // POST: api/Movie
+        // POST: api/Role
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
-        [Authorize(Roles = "Admin")]
-        public async Task<ActionResult<Movie>> PostMovie(Movie movie)
+        public async Task<ActionResult<Role>> PostUserRole(Role userRole)
         {
-            _context.Movies.Add(movie);
+          if (_context.Roles == null)
+          {
+              return Problem("Entity set 'MovieContext.Roles'  is null.");
+          }
+            _context.Roles.Add(userRole);
             await _context.SaveChangesAsync();
 
-            return CreatedAtAction("GetMovie", new { id = movie.Id }, movie);
+            return CreatedAtAction("GetUserRole", new { id = userRole.Id }, userRole);
         }
 
-        // DELETE: api/Movie/5
+        // DELETE: api/Role/5
         [HttpDelete("{id}")]
-        [Authorize(Roles = "Admin")]
-        public async Task<IActionResult> DeleteMovie(long id)
+        public async Task<IActionResult> DeleteUserRole(long id)
         {
-            if (_context.Movies == null)
+            if (_context.Roles == null)
             {
                 return NotFound();
             }
-            var movie = await _context.Movies.FindAsync(id);
-            if (movie == null)
+            var userRole = await _context.Roles.FindAsync(id);
+            if (userRole == null)
             {
                 return NotFound();
             }
 
-            _context.Movies.Remove(movie);
+            _context.Roles.Remove(userRole);
             await _context.SaveChangesAsync();
 
             return NoContent();
         }
 
-        private bool MovieExists(long id)
+        private bool UserRoleExists(long id)
         {
-            return (_context.Movies?.Any(e => e.Id == id)).GetValueOrDefault();
+            return (_context.Roles?.Any(e => e.Id == id)).GetValueOrDefault();
         }
     }
 }
