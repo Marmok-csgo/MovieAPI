@@ -7,7 +7,6 @@ namespace MovieAPI.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    [Authorize(Roles = "Admin")]
     public class RoleController : ControllerBase
     {
         private readonly MovieContext _context;
@@ -19,6 +18,7 @@ namespace MovieAPI.Controllers
 
         // GET: api/Role
         [HttpGet]
+        [Authorize]
         public async Task<ActionResult<IEnumerable<Role>>> GetRoles()
         {
           if (_context.Roles == null)
@@ -30,6 +30,7 @@ namespace MovieAPI.Controllers
 
         // GET: api/Role/5
         [HttpGet("{id}")]
+        [Authorize]
         public async Task<ActionResult<Role>> GetUserRole(long id)
         {
           if (_context.Roles == null)
@@ -49,6 +50,7 @@ namespace MovieAPI.Controllers
         // PUT: api/Role/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPut("{id}")]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> PutUserRole(long id, Role userRole)
         {
             if (id != userRole.Id)
@@ -80,6 +82,7 @@ namespace MovieAPI.Controllers
         // POST: api/Role
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
+        [Authorize(Roles = "Admin")]
         public async Task<ActionResult<Role>> PostUserRole(Role userRole)
         {
           if (_context.Roles == null)
@@ -94,6 +97,7 @@ namespace MovieAPI.Controllers
 
         // DELETE: api/Role/5
         [HttpDelete("{id}")]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> DeleteUserRole(long id)
         {
             if (_context.Roles == null)
