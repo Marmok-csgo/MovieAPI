@@ -10,7 +10,6 @@ namespace MovieAPI.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    [Authorize]
     public class AuthController : ControllerBase
     {
         public static User user = new User();
