@@ -15,4 +15,6 @@ public class MovieContext : DbContext
     public DbSet<User> Users { get; set; } = null!;
     
     public DbSet<Role> Roles { get; set; } = null!;
+    
+    public DbSet<Country> Countries { get; set; } = null!;
 }
