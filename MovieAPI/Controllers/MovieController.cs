@@ -24,7 +24,8 @@ namespace MovieAPI.Controllers
           {
               return NotFound();
           }
-            return await _context.Movies.ToListAsync();
+            return await _context.Movies.Include(m => m.Country).ToListAsync();
+            // return _context.Movies.Include(m => m.Country).ToList();
         }
 
         // GET: api/Movie/5
@@ -93,7 +94,7 @@ namespace MovieAPI.Controllers
         // DELETE: api/Movie/5
         [HttpDelete("{id}")]
         [Authorize(Roles = "Admin")]
-        public async Task<IActionResult> DeleteMovie(long id)
+        public async Task<IActionResult> DeleteMovie(int id)
         {
             if (_context.Movies == null)
             {

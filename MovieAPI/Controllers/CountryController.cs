@@ -12,58 +12,58 @@ namespace MovieAPI.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class RoleController : ControllerBase
+    public class CountryController : ControllerBase
     {
         private readonly MovieContext _context;
 
-        public RoleController(MovieContext context)
+        public CountryController(MovieContext context)
         {
             _context = context;
         }
 
-        // GET: api/Role
+        // GET: api/Country
         [HttpGet]
         [Authorize]
-        public async Task<ActionResult<IEnumerable<Role>>> GetRoles()
+        public async Task<ActionResult<IEnumerable<Country>>> GetCountries()
         {
-          if (_context.Roles == null)
+          if (_context.Countries == null)
           {
               return NotFound();
           }
-            return await _context.Roles.ToListAsync();
+            return await _context.Countries.ToListAsync();
         }
 
-        // GET: api/Role/5
+        // GET: api/Country/5
         [HttpGet("{id}")]
         [Authorize]
-        public async Task<ActionResult<Role>> GetRole(int id)
+        public async Task<ActionResult<Country>> GetCountry(int id)
         {
-          if (_context.Roles == null)
+          if (_context.Countries == null)
           {
               return NotFound();
           }
-            var role = await _context.Roles.FindAsync(id);
+            var country = await _context.Countries.FindAsync(id);
 
-            if (role == null)
+            if (country == null)
             {
                 return NotFound();
             }
 
-            return role;
+            return country;
         }
 
-        // PUT: api/Role/5
+        // PUT: api/Country/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPut("{id}")]
         [Authorize(Roles = "Admin")]
-        public async Task<IActionResult> PutRole(int id, Role role)
+        public async Task<IActionResult> PutCountry(int id, Country country)
         {
-            if (id != role.Id)
+            if (id != country.Id)
             {
                 return BadRequest();
             }
 
-            _context.Entry(role).State = EntityState.Modified;
+            _context.Entry(country).State = EntityState.Modified;
 
             try
             {
@@ -71,7 +71,7 @@ namespace MovieAPI.Controllers
             }
             catch (DbUpdateConcurrencyException)
             {
-                if (!RoleExists(id))
+                if (!CountryExists(id))
                 {
                     return NotFound();
                 }
@@ -84,46 +84,46 @@ namespace MovieAPI.Controllers
             return NoContent();
         }
 
-        // POST: api/Role
+        // POST: api/Country
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
         [Authorize(Roles = "Admin")]
-        public async Task<ActionResult<Role>> PostRole(Role role)
+        public async Task<ActionResult<Country>> PostCountry(Country country)
         {
-          if (_context.Roles == null)
+          if (_context.Countries == null)
           {
-              return Problem("Entity set 'MovieContext.Roles'  is null.");
+              return Problem("Entity set 'MovieContext.Countries'  is null.");
           }
-            _context.Roles.Add(role);
+            _context.Countries.Add(country);
             await _context.SaveChangesAsync();
 
-            return CreatedAtAction("GetRole", new { id = role.Id }, role);
+            return CreatedAtAction("GetCountry", new { id = country.Id }, country);
         }
 
-        // DELETE: api/Role/5
+        // DELETE: api/Country/5
         [HttpDelete("{id}")]
         [Authorize(Roles = "Admin")]
-        public async Task<IActionResult> DeleteRole(int id)
+        public async Task<IActionResult> DeleteCountry(int id)
         {
-            if (_context.Roles == null)
+            if (_context.Countries == null)
             {
                 return NotFound();
             }
-            var role = await _context.Roles.FindAsync(id);
-            if (role == null)
+            var country = await _context.Countries.FindAsync(id);
+            if (country == null)
             {
                 return NotFound();
             }
 
-            _context.Roles.Remove(role);
+            _context.Countries.Remove(country);
             await _context.SaveChangesAsync();
 
             return NoContent();
         }
 
-        private bool RoleExists(int id)
+        private bool CountryExists(int id)
         {
-            return (_context.Roles?.Any(e => e.Id == id)).GetValueOrDefault();
+            return (_context.Countries?.Any(e => e.Id == id)).GetValueOrDefault();
         }
     }
 }
