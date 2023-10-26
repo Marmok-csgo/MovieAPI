@@ -44,7 +44,7 @@ builder.Services.AddSwaggerGen(options =>
 
 
 // получаем строку подключения из файла конфигурации
-string connection = builder.Configuration.GetConnectionString("DefaultConnection");
+string connection = builder.Configuration.GetConnectionString("DefaultConnection")!;
 builder.Services.AddDbContext<MovieContext>(opt =>
     opt.UseNpgsql(connection));
 
