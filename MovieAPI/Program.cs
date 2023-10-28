@@ -1,6 +1,8 @@
 using System.Text;
+using FileUpload.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.FileProviders;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using MovieAPI.Models;
@@ -40,6 +42,8 @@ builder.Services.AddSwaggerGen(options =>
     options.OperationFilter<SecurityRequirementsOperationFilter>();
 });
 
+builder.Services.AddTransient<IManageImage, ManageImage>();
+
 
 
 
@@ -62,6 +66,13 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
+
+app.UseStaticFiles(new StaticFileOptions
+{
+    FileProvider = new PhysicalFileProvider(
+        Path.Combine(builder.Environment.ContentRootPath, "Uploads/StaticContent")),
+    RequestPath = "/Uploads/StaticContent"
+});
 
 app.UseHttpsRedirection();
 

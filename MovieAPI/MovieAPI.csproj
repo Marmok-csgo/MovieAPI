@@ -25,6 +25,11 @@
     </ItemGroup>
 
 
+
+    <ItemGroup>
+      <Folder Include="Uploads\StaticContent\" />
+    </ItemGroup>
+
     
     
 </Project>
