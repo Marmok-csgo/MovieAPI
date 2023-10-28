@@ -1,4 +1,6 @@
+using FileUpload.Services;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http.Extensions;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using MovieAPI.Models;
@@ -11,10 +13,14 @@ namespace MovieAPI.Controllers
     public class MovieController : ControllerBase
     {
         private readonly MovieContext _context;
+        private readonly IManageImage _iManageImage;
+        private readonly IConfiguration _config;
 
-        public MovieController(MovieContext context)
+        public MovieController(MovieContext context, IManageImage iManageImage, IConfiguration config)
         {
             _context = context;
+            _iManageImage = iManageImage;
+            _config = config;
         }
 
         // GET: api/films
@@ -30,7 +36,7 @@ namespace MovieAPI.Controllers
 
         // GET: api/Movie/5
         [HttpGet("{id}")]
-        public async Task<ActionResult<Movie>> GetMovie(long id)
+        public async Task<ActionResult<Movie>> GetMovie(int id)
         {
           if (_context.Movies == null)
           {
@@ -82,9 +88,10 @@ namespace MovieAPI.Controllers
         // POST: api/Movie
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
-        [Authorize(Roles = "Admin")]
-        public async Task<ActionResult<MovieResponse>> PostMovie(MovieDto request)
+        // [Authorize(Roles = "Admin")]
+        public async Task<ActionResult<MovieResponse>> PostMovie([FromForm]MovieDto request)
         {
+            var fileName = await _iManageImage.UploadFile(request.Poster);
             
             var movie = new Movie
             {
@@ -94,17 +101,17 @@ namespace MovieAPI.Controllers
                 Genres = _context.Genres.Where(g => request.GenresIds.Contains(g.Id)).ToList(),
                 Author = request.Author,
                 ReleaseDate = request.ReleaseDate,
-                Poster = request.Poster
+                Poster = fileName
             };
-            
             
             _context.Movies.Add(movie);
             await _context.SaveChangesAsync();
 
             string countryName = _context.Countries.FirstOrDefault(c => c.Id == movie.CountryId).Name;
-
+            
             var response = new MovieResponse(
-                movie.Id, movie.Name, movie.Description, countryName, movie.ReleaseDate, movie.Poster, movie.Author);
+                movie.Id, movie.Name, movie.Description, countryName, movie.ReleaseDate, 
+                $"{_config.GetSection("Domain").Value}/Uploads/StaticContent/{movie.Poster}", movie.Author);
 
             return CreatedAtAction("GetMovie", new { id = movie.Id }, response);
         }
