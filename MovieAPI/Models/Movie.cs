@@ -7,12 +7,13 @@ public class Movie
     public string? Description { get; set; }
     public Country? Country { get; set; }
     public int CountryId { get; set; }
-
-
-    public List<Genre> Genres { get; set; } = null!;
     
+    public List<Genre> Genres { get; set; } = null!;
+
+    public List<People> People { get; set; } = null!;
+
     public DateOnly ReleaseDate { get; set; }
     public string? Poster { get; set; }
-    public string? Author { get; set; }
+    
     
 }

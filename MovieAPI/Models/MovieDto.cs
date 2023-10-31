@@ -8,11 +8,12 @@ public class MovieDto
     
     public int CountryId { get; set; }
     
-    public List<int> GenresIds { get; set; }
-    
+    public List<int> GenresIds { get; set; } = null!;
+
+    public List<int> PeopleIds { get; set; } = null!;
+
     public DateOnly ReleaseDate { get; set; }
     
     public IFormFile? Poster { get; set; }
     
-    public string? Author { get; set; }
 }
