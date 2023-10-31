@@ -13,7 +13,7 @@ public class MovieResponse
     
     public string? Author { get; set; }
 
-    public MovieResponse(int id, string? name, string? description, string? countryName, DateOnly realeseDate, string? poster, string? author)
+    public MovieResponse(int id, string? name, string? description, string? countryName, DateOnly realeseDate, string? poster)
     {
         Id = id;
         Name = name;
@@ -21,6 +21,5 @@ public class MovieResponse
         CountryName = countryName;
         RealeseDate = realeseDate;
         Poster = poster;
-        Author = author;
     }
 }
