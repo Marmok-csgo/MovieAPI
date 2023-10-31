@@ -1,6 +1,5 @@
 using FileUpload.Services;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http.Extensions;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using MovieAPI.Models;
@@ -99,7 +98,7 @@ namespace MovieAPI.Controllers
                 Description = request.Description,
                 CountryId = request.CountryId,
                 Genres = _context.Genres.Where(g => request.GenresIds.Contains(g.Id)).ToList(),
-                Author = request.Author,
+                People = _context.People.Where(p => request.PeopleIds.Contains(p.Id)).ToList(),
                 ReleaseDate = request.ReleaseDate,
                 Poster = fileName
             };
@@ -111,7 +110,7 @@ namespace MovieAPI.Controllers
             
             var response = new MovieResponse(
                 movie.Id, movie.Name, movie.Description, countryName, movie.ReleaseDate, 
-                $"{_config.GetSection("Domain").Value}/Uploads/StaticContent/{movie.Poster}", movie.Author);
+                $"{_config.GetSection("Domain").Value}/Uploads/StaticContent/{movie.Poster}");
 
             return CreatedAtAction("GetMovie", new { id = movie.Id }, response);
         }

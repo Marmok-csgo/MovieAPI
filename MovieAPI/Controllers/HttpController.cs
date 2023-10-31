@@ -12,10 +12,12 @@ namespace MovieAPI.Controllers
     {
         
         private readonly MovieContext _context;
+        private readonly IConfiguration _configuration;
 
-        public HttpController(MovieContext context)
+        public HttpController(MovieContext context, IConfiguration configuration)
         {
             _context = context;
+            _configuration = configuration;
         }
 
         [HttpGet]
@@ -69,8 +71,8 @@ namespace MovieAPI.Controllers
                 Headers =
                 {
                     { "accept", "application/json" },
-                    { "Authorization", "Bearer eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiI4ZDY3ODMzZTQ4ZDNmMjgwOGI5YWQzYWQ1MTUzN2Q0NCIsInN1YiI6IjY1NDA5M2RmNzUxMTBkMDEzOTYwYmQyYSIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.kAuIdFIawKWc4vSXfzhPZM1116P2NJX_Rid2i0kHYi4" },
-                },
+                    { "Authorization", _configuration.GetSection("GetGenresAuthorization").Value }
+                }
             };
             using (var response = await client.SendAsync(request))
             {
@@ -91,6 +93,44 @@ namespace MovieAPI.Controllers
                 }
             }
 
+            return Ok();
+        }
+
+        [HttpGet]
+        [Route("Get/People")]
+
+        public async Task<IActionResult> GetPeople()
+        {
+            
+            var client = new HttpClient();
+            var request = new HttpRequestMessage
+            {
+                Method = HttpMethod.Get,
+                RequestUri = new Uri("https://api.themoviedb.org/3/movie/553/credits?language=en-US"),
+                Headers =
+                {
+                    { "accept", "application/json" },
+                    { "Authorization", _configuration.GetSection("GetPeopleAuthorization").Value }
+                }
+            };
+            using (var response = await client.SendAsync(request))
+            {
+                response.EnsureSuccessStatusCode();
+                var jsonData = await response.Content.ReadAsStringAsync();
+                
+                var dataObject = JsonConvert.DeserializeObject<PeopleRootObject>(jsonData);
+
+                List<string> peopleNames = dataObject.Cast.ConvertAll(item => item.Name);
+
+                foreach (var name in peopleNames)
+                {
+                    if (_context.People.SingleOrDefault(p => p.Name == name) == null)
+                    {
+                        _context.People.Add(new People {Name = name});
+                        _context.SaveChanges();
+                    }
+                }
+            }
             return Ok();
         }
     }
