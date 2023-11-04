@@ -12,8 +12,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace MovieAPI.Migrations
 {
     [DbContext(typeof(MovieContext))]
-    [Migration("20231031095250_LastNameFieldDeletedFromPeople")]
-    partial class LastNameFieldDeletedFromPeople
+    [Migration("20231104084149_updated")]
+    partial class updated
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
