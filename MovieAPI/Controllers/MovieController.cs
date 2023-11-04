@@ -24,7 +24,7 @@ namespace MovieAPI.Controllers
 
         // GET: api/films
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<MovieResponse>>> GetMovies()
+        public async Task<ActionResult<IEnumerable<MovieResponse>>> GetMovies(int page = 1)
         {
             var movies = await _context.Movies
                 .Include(m => m.Country)
@@ -49,12 +49,19 @@ namespace MovieAPI.Controllers
                 movie.Genres?.Select(g => g.Name).ToList()
             )).ToList();
 
-            return movieResponses;
+            
+            int pageSize = 1;
+            
+            var productsPerPage = movieResponses
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ToList();
+            return productsPerPage;
         }
 
 
         // GET: api/Movie/5
-        [HttpGet("{id}")]
+        [HttpGet("GetById{id}")]
         public async Task<ActionResult<MovieResponse>> GetMovie(int id)
         {
             var movie = await _context.Movies
@@ -83,6 +90,32 @@ namespace MovieAPI.Controllers
             return movieResponse;
         }
 
+        [HttpGet("GetByName{name}")]
+        public async Task<ActionResult<IEnumerable<MovieResponse>>> GetMovieByName(string name)
+        {
+            var movies = await _context.Movies
+                .Include(m => m.Country)
+                .Include(m => m.People)
+                .Include(m => m.Genres)
+                .ToListAsync();
+
+            var movieResponses = movies
+                .Where(movie => movie.Name != null && 
+                                movie.Name.IndexOf(name, StringComparison.OrdinalIgnoreCase) >= 0)
+                .Select(movie => new MovieResponse(
+                    movie.Id,
+                    movie.Name,
+                    movie.Description,
+                    movie.Country?.Name,
+                    movie.ReleaseDate,
+                    $"{_config.GetSection("Domain").Value}/Uploads/StaticContent/{movie.Poster}",
+                    movie.People?.FirstOrDefault(p => p.IsAuthor)?.Name,
+                    movie.People?.Select(p => p.Name).ToList(), 
+                    movie.Genres?.Select(g => g.Name).ToList() 
+                )).ToList();
+
+            return movieResponses;
+        }
         
 
         // PUT: api/Movie/5
