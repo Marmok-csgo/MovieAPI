@@ -23,7 +23,7 @@ namespace MovieAPI.Controllers
 
         // GET: api/Role
         [HttpGet]
-        [Authorize]
+        // [Authorize]
         public async Task<ActionResult<IEnumerable<Role>>> GetRoles()
         {
           if (_context.Roles == null)
@@ -87,7 +87,7 @@ namespace MovieAPI.Controllers
         // POST: api/Role
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
-        [Authorize(Roles = "Admin")]
+        // [Authorize(Roles = "Admin")]
         public async Task<ActionResult<Role>> PostRole(Role role)
         {
           if (_context.Roles == null)
