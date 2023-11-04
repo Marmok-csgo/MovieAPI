@@ -24,32 +24,65 @@ namespace MovieAPI.Controllers
 
         // GET: api/films
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Movie>>> GetMovies()
+        public async Task<ActionResult<IEnumerable<MovieResponse>>> GetMovies()
         {
-          if (_context.Movies == null)
-          {
-              return NotFound();
-          }
-            return await _context.Movies.Include(m => m.Country).ToListAsync();
-        }
+            var movies = await _context.Movies
+                .Include(m => m.Country)
+                .Include(m => m.People)
+                .Include(m => m.Genres)
+                .ToListAsync();
 
-        // GET: api/Movie/5
-        [HttpGet("{id}")]
-        public async Task<ActionResult<Movie>> GetMovie(int id)
-        {
-          if (_context.Movies == null)
-          {
-              return NotFound();
-          }
-            var movie = await _context.Movies.FindAsync(id);
-
-            if (movie == null)
+            if (movies == null)
             {
                 return NotFound();
             }
 
-            return movie;
+            var movieResponses = movies.Select(movie => new MovieResponse(
+                movie.Id,
+                movie.Name,
+                movie.Description,
+                movie.Country?.Name,
+                movie.ReleaseDate,
+                $"{_config.GetSection("Domain").Value}/Uploads/StaticContent/{movie.Poster}",
+                movie.People?.FirstOrDefault(p => p.IsAuthor)?.Name, 
+                movie.People?.Select(p => p.Name).ToList(), 
+                movie.Genres?.Select(g => g.Name).ToList()
+            )).ToList();
+
+            return movieResponses;
         }
+
+
+        // GET: api/Movie/5
+        [HttpGet("{id}")]
+        public async Task<ActionResult<MovieResponse>> GetMovie(int id)
+        {
+            var movie = await _context.Movies
+                .Include(m => m.Country)
+                .Include(m => m.People)
+                .Include(m => m.Genres)
+                .FirstOrDefaultAsync(m => m.Id == id);
+
+            if (movie == null)
+            {
+                return NotFound("Movie not found");
+            }
+
+            var movieResponse = new MovieResponse(
+                movie.Id,
+                movie.Name,
+                movie.Description,
+                movie.Country?.Name,
+                movie.ReleaseDate,
+                $"{_config.GetSection("Domain").Value}/Uploads/StaticContent/{movie.Poster}",
+                movie.People?.FirstOrDefault(p => p.IsAuthor)?.Name, 
+                movie.People?.Select(p => p.Name).ToList(), 
+                movie.Genres?.Select(g => g.Name).ToList() 
+            );
+
+            return movieResponse;
+        }
+
         
 
         // PUT: api/Movie/5
@@ -88,32 +121,39 @@ namespace MovieAPI.Controllers
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
         // [Authorize(Roles = "Admin")]
-        public async Task<ActionResult<MovieResponse>> PostMovie([FromForm]MovieDto request)
+        public async Task<ActionResult<MovieResponse>> PostMovie([FromForm] MovieDto request)
         {
             var fileName = await _iManageImage.UploadFile(request.Poster);
-            
+
+            var genres = await _context.Genres.Where(g => request.GenresIds.Contains(g.Id)).ToListAsync();
+            var people = await _context.People.Where(p => request.PeopleIds.Contains(p.Id)).ToListAsync();
+
+            var country = await _context.Countries.FirstOrDefaultAsync(c => c.Id == request.CountryId);
+
             var movie = new Movie
             {
                 Name = request.Name,
                 Description = request.Description,
-                CountryId = request.CountryId,
-                Genres = _context.Genres.Where(g => request.GenresIds.Contains(g.Id)).ToList(),
-                People = _context.People.Where(p => request.PeopleIds.Contains(p.Id)).ToList(),
+                Country = country,
+                Genres = genres,
+                People = people,
                 ReleaseDate = request.ReleaseDate,
                 Poster = fileName
             };
-            
+
             _context.Movies.Add(movie);
             await _context.SaveChangesAsync();
 
-            string countryName = _context.Countries.FirstOrDefault(c => c.Id == movie.CountryId).Name;
-            
             var response = new MovieResponse(
-                movie.Id, movie.Name, movie.Description, countryName, movie.ReleaseDate, 
-                $"{_config.GetSection("Domain").Value}/Uploads/StaticContent/{movie.Poster}");
+                movie.Id, movie.Name, movie.Description, country.Name, movie.ReleaseDate,
+                $"{_config.GetSection("Domain").Value}/Uploads/StaticContent/{movie.Poster}",
+                movie.People.FirstOrDefault(p => p.IsAuthor)?.Name,
+                movie.People.Select(p => p.Name).ToList(),
+                movie.Genres.Select(g => g.Name).ToList());
 
             return CreatedAtAction("GetMovie", new { id = movie.Id }, response);
         }
+
 
         // DELETE: api/Movie/5
         [HttpDelete("{id}")]

@@ -59,44 +59,6 @@ namespace MovieAPI.Controllers
         }
 
         [HttpGet]
-        [Route("Get/Genres")]
-
-        public async Task<IActionResult> GetGenre()
-        {
-            var client = new HttpClient();
-            var request = new HttpRequestMessage
-            {
-                Method = HttpMethod.Get,
-                RequestUri = new Uri("https://api.themoviedb.org/3/genre/movie/list?language=en"),
-                Headers =
-                {
-                    { "accept", "application/json" },
-                    { "Authorization", _configuration.GetSection("GetGenresAuthorization").Value }
-                }
-            };
-            using (var response = await client.SendAsync(request))
-            {
-                response.EnsureSuccessStatusCode();
-                var jsonData = await response.Content.ReadAsStringAsync();
-                
-                var dataObject = JsonConvert.DeserializeObject<RootObj>(jsonData);
-                
-                List<string> genreNames = dataObject.genres.ConvertAll(item => item.Name);
-                
-                foreach (var name in genreNames)
-                {
-                    if (_context.Genres.SingleOrDefault(g => g.Name == name) == null)
-                    {
-                        _context.Genres.Add(new Genre {Name = name});
-                        _context.SaveChanges();
-                    }
-                }
-            }
-
-            return Ok();
-        }
-
-        [HttpGet]
         [Route("Get/People")]
 
         public async Task<IActionResult> GetPeople()
@@ -106,7 +68,7 @@ namespace MovieAPI.Controllers
             var request = new HttpRequestMessage
             {
                 Method = HttpMethod.Get,
-                RequestUri = new Uri("https://api.themoviedb.org/3/movie/553/credits?language=en-US"),
+                RequestUri = new Uri("https://api.themoviedb.org/3/movie/554/credits?language=en-US"),
                 Headers =
                 {
                     { "accept", "application/json" },

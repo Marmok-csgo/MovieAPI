@@ -28,7 +28,8 @@ namespace MovieAPI.Controllers
         {
             string passwordHash
                 = BCrypt.Net.BCrypt.HashPassword(request.Password);
-            
+
+            user.Id = (_movieContext.Users.ToList().Count) + 1;
             user.UserName = request.UserName;
             user.PasswordHash = passwordHash;
             user.Role = _movieContext.Roles.FirstOrDefault(role => role.Name == "Client");
