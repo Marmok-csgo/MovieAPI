@@ -114,8 +114,42 @@ namespace MovieAPI.Controllers
                     movie.Genres?.Select(g => g.Name).ToList() 
                 )).ToList();
 
+            return movieResponses.Count == 0 ? Ok("Not Found") : movieResponses;
+
+        }
+
+
+        [HttpGet("GetByGenre")]
+        public async Task<ActionResult<IEnumerable<MovieResponse>>> GetMovieByGenre([FromQuery] List<string> desiredGenres)
+        {
+            var movies = await _context.Movies
+                .Include(m => m.Country)
+                .Include(m => m.People)
+                .Include(m => m.Genres)
+                .ToListAsync();
+
+            List<Movie> filteredMovies = movies
+                .Where(movie => desiredGenres.All(desiredGenre =>
+                    movie.Genres.Any(genre =>
+                        string.Equals(genre.Name, desiredGenre, StringComparison.OrdinalIgnoreCase)))
+                )
+                .ToList();
+    
+            var movieResponses = filteredMovies.Select(movie => new MovieResponse(
+                movie.Id,
+                movie.Name,
+                movie.Description,
+                movie.Country?.Name,
+                movie.ReleaseDate,
+                $"{_config.GetSection("Domain").Value}/Uploads/StaticContent/{movie.Poster}",
+                movie.People?.FirstOrDefault(p => p.IsAuthor)?.Name, 
+                movie.People?.Select(p => p.Name).ToList(), 
+                movie.Genres?.Select(g => g.Name).ToList()
+            )).ToList();
+
             return movieResponses;
         }
+
         
 
         // PUT: api/Movie/5
@@ -156,35 +190,74 @@ namespace MovieAPI.Controllers
         // [Authorize(Roles = "Admin")]
         public async Task<ActionResult<MovieResponse>> PostMovie([FromForm] MovieDto request)
         {
-            var fileName = await _iManageImage.UploadFile(request.Poster);
-
-            var genres = await _context.Genres.Where(g => request.GenresIds.Contains(g.Id)).ToListAsync();
-            var people = await _context.People.Where(p => request.PeopleIds.Contains(p.Id)).ToListAsync();
-
-            var country = await _context.Countries.FirstOrDefaultAsync(c => c.Id == request.CountryId);
-
-            var movie = new Movie
+            // VALIDATE
+            if (!ModelState.IsValid)
             {
-                Name = request.Name,
-                Description = request.Description,
-                Country = country,
-                Genres = genres,
-                People = people,
-                ReleaseDate = request.ReleaseDate,
-                Poster = fileName
-            };
+                return BadRequest(ModelState);
+            }
 
-            _context.Movies.Add(movie);
-            await _context.SaveChangesAsync();
+            if (request.GenresIds == null || request.GenresIds.Count == 0)
+            {
+                ModelState.AddModelError("GenresIds", "GenresIds must not be empty.");
+                return BadRequest(ModelState);
+            }
 
-            var response = new MovieResponse(
-                movie.Id, movie.Name, movie.Description, country.Name, movie.ReleaseDate,
-                $"{_config.GetSection("Domain").Value}/Uploads/StaticContent/{movie.Poster}",
-                movie.People.FirstOrDefault(p => p.IsAuthor)?.Name,
-                movie.People.Select(p => p.Name).ToList(),
-                movie.Genres.Select(g => g.Name).ToList());
+            if (request.PeopleIds == null || request.PeopleIds.Count == 0)
+            {
+                ModelState.AddModelError("PeopleIds", "PeopleIds must not be empty.");
+                return BadRequest(ModelState);
+            }
 
-            return CreatedAtAction("GetMovie", new { id = movie.Id }, response);
+            if (request.Poster == null || request.Poster.Length == 0)
+            {
+                ModelState.AddModelError("Poster", "Poster file is required.");
+                return BadRequest(ModelState);
+            }
+
+            var existingMovie = await _context.Movies.FirstOrDefaultAsync(m => m.Name == request.Name);
+            if (existingMovie != null)
+            {
+                ModelState.AddModelError("Name", "A movie with the same name already exists.");
+                return BadRequest(ModelState);
+            }
+
+            try
+            {
+                var fileName = await _iManageImage.UploadFile(request.Poster);
+
+                var genres = await _context.Genres.Where(g => request.GenresIds.Contains(g.Id)).ToListAsync();
+                var people = await _context.People.Where(p => request.PeopleIds.Contains(p.Id)).ToListAsync();
+
+                var country = await _context.Countries.FirstOrDefaultAsync(c => c.Id == request.CountryId);
+
+                var movie = new Movie
+                {
+                    Name = request.Name,
+                    Description = request.Description,
+                    Country = country,
+                    Genres = genres,
+                    People = people,
+                    ReleaseDate = request.ReleaseDate,
+                    Poster = fileName
+                };
+
+                _context.Movies.Add(movie);
+                await _context.SaveChangesAsync();
+
+                var response = new MovieResponse(
+                    movie.Id, movie.Name, movie.Description, country.Name, movie.ReleaseDate,
+                    $"{_config.GetSection("Domain").Value}/Uploads/StaticContent/{movie.Poster}",
+                    movie.People.FirstOrDefault(p => p.IsAuthor)?.Name,
+                    movie.People.Select(p => p.Name).ToList(),
+                    movie.Genres.Select(g => g.Name).ToList());
+
+                return CreatedAtAction("GetMovie", new { id = movie.Id }, response);
+            }
+            catch (Exception ex)
+            {
+                ModelState.AddModelError("Exception", "An error occurred while creating the movie.");
+                return BadRequest(ModelState);
+            }
         }
 
 
