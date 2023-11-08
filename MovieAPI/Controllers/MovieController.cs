@@ -24,15 +24,18 @@ namespace MovieAPI.Controllers
 
         // GET: api/films
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<MovieResponse>>> GetMovies([FromQuery] int page = 1, [FromQuery] string name = null, [FromQuery] List<string> genres = null)
+        public async Task<ActionResult<MovieAndPaginationResponse>> GetMoviesAndPagination([FromQuery] int page = 1, [FromQuery] string name = null,
+            [FromQuery] List<string> genres = null)
         {
-            var movies = await _context.Movies
+            int pageSize = 1;
+            
+            var totalMovies = await _context.Movies.CountAsync();
+            
+            var filteredMovies = await _context.Movies
                 .Include(m => m.Country)
                 .Include(m => m.People)
                 .Include(m => m.Genres)
                 .ToListAsync();
-
-            var filteredMovies = movies;
 
             if (!string.IsNullOrEmpty(name))
             {
@@ -51,8 +54,7 @@ namespace MovieAPI.Controllers
                     )
                 ).ToList();
             }
-
-            int pageSize = 1;
+            
             var moviesPerPage = filteredMovies
                 .Skip((page - 1) * pageSize)
                 .Take(pageSize)
@@ -68,32 +70,41 @@ namespace MovieAPI.Controllers
                     movie.Genres?.Select(g => g.Name).ToList()
                 ))
                 .ToList();
-
+            
+            var pagination = new Pagination
+            {
+                Current = page,
+                Total = totalMovies,
+                Next = (page * pageSize < totalMovies) ? $"{_config.GetSection("Domain").Value}{Url.Action("GetMoviesAndPagination", new { page = page + 1, name, genres })}" : null,
+                Previous = (page > 1) ? $"{_config.GetSection("Domain").Value}{Url.Action("GetMoviesAndPagination", new { page = page - 1, name, genres })}" : null
+            };
+            
+            var response = new MovieAndPaginationResponse
+            {
+                Movies = moviesPerPage,
+                Links = pagination
+            };
+            
             if (moviesPerPage.Count == 0)
             {
                 return Ok("Not Found");
             }
 
-            return moviesPerPage;
+            return Ok(response);
         }
 
-        [HttpGet("pagination")]
-
-        public async Task<ActionResult<Pagination>> GetPagination([FromQuery]int page = 1)
+        [HttpGet("filter")]
+        public async Task<IEnumerable<Genre>> GetFilters()
         {
-            int pageSize = 1;
-            int totalMovies = await _context.Movies.CountAsync();
-            
-            var result = new Pagination
-            {
-                Current = page,
-                Total = totalMovies,
-                Next = (page * pageSize < totalMovies) ? Url.Action("GetPagination", new { page = page + 1 }) : null,
-                Previous = (page > 1) ? Url.Action("GetPagination", new { page = page - 1 }) : null
-            };
+            var filters = await _context.Movies
+                .Include(m => m.Genres)
+                .SelectMany(movie => movie.Genres)
+                .Distinct()
+                .ToListAsync();
 
-            return Ok(result);
+            return filters;
         }
+        
         
         
         
