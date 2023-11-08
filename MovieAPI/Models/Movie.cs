@@ -14,6 +14,4 @@ public class Movie
 
     public DateOnly ReleaseDate { get; set; }
     public string? Poster { get; set; }
-    
-    
 }
