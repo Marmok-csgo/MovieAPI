@@ -24,7 +24,7 @@ namespace MovieAPI.Controllers
 
         // GET: api/films
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<MovieResponse>>> GetMovies(int page = 1)
+        public async Task<ActionResult<IEnumerable<MovieResponse>>> GetMovies([FromQuery] int page = 1, [FromQuery] string name = null, [FromQuery] List<string> genres = null)
         {
             var movies = await _context.Movies
                 .Include(m => m.Country)
@@ -32,79 +32,30 @@ namespace MovieAPI.Controllers
                 .Include(m => m.Genres)
                 .ToListAsync();
 
-            if (movies == null)
+            var filteredMovies = movies;
+
+            if (!string.IsNullOrEmpty(name))
             {
-                return NotFound();
+                filteredMovies = filteredMovies.Where(movie =>
+                    movie.Name != null &&
+                    movie.Name.IndexOf(name, StringComparison.OrdinalIgnoreCase) >= 0
+                ).ToList();
             }
 
-            var movieResponses = movies.Select(movie => new MovieResponse(
-                movie.Id,
-                movie.Name,
-                movie.Description,
-                movie.Country?.Name,
-                movie.ReleaseDate,
-                $"{_config.GetSection("Domain").Value}/Uploads/StaticContent/{movie.Poster}",
-                movie.People?.FirstOrDefault(p => p.IsAuthor)?.Name, 
-                movie.People?.Select(p => p.Name).ToList(), 
-                movie.Genres?.Select(g => g.Name).ToList()
-            )).ToList();
+            if (genres != null && genres.Any())
+            {
+                filteredMovies = filteredMovies.Where(movie =>
+                    genres.All(searchGenre =>
+                        movie.Genres.Any(genre =>
+                            string.Equals(genre.Name, searchGenre, StringComparison.OrdinalIgnoreCase))
+                    )
+                ).ToList();
+            }
 
-            
             int pageSize = 1;
-            
-            var productsPerPage = movieResponses
+            var moviesPerPage = filteredMovies
                 .Skip((page - 1) * pageSize)
                 .Take(pageSize)
-                .ToList();
-            return productsPerPage;
-        }
-
-
-        // GET: api/Movie/5
-        [HttpGet("ById/{id}")]
-        public async Task<ActionResult<MovieResponse>> GetMovie(int id)
-        {
-            var movie = await _context.Movies
-                .Include(m => m.Country)
-                .Include(m => m.People)
-                .Include(m => m.Genres)
-                .FirstOrDefaultAsync(m => m.Id == id);
-
-            if (movie == null)
-            {
-                return NotFound("Movie not found");
-            }
-
-            var movieResponse = new MovieResponse(
-                movie.Id,
-                movie.Name,
-                movie.Description,
-                movie.Country?.Name,
-                movie.ReleaseDate,
-                $"{_config.GetSection("Domain").Value}/Uploads/StaticContent/{movie.Poster}",
-                movie.People?.FirstOrDefault(p => p.IsAuthor)?.Name, 
-                movie.People?.Select(p => p.Name).ToList(), 
-                movie.Genres?.Select(g => g.Name).ToList() 
-            );
-
-            return movieResponse;
-        }
-
-        
-        
-        
-        [HttpGet("ByName")]
-        public async Task<ActionResult<IEnumerable<MovieResponse>>> GetMovieByName([FromQuery]string name)
-        {
-            var movies = await _context.Movies
-                .Include(m => m.Country)
-                .Include(m => m.People)
-                .Include(m => m.Genres)
-                .ToListAsync();
-
-            var movieResponses = movies
-                .Where(movie => movie.Name != null && 
-                                movie.Name.IndexOf(name, StringComparison.OrdinalIgnoreCase) >= 0)
                 .Select(movie => new MovieResponse(
                     movie.Id,
                     movie.Name,
@@ -113,48 +64,18 @@ namespace MovieAPI.Controllers
                     movie.ReleaseDate,
                     $"{_config.GetSection("Domain").Value}/Uploads/StaticContent/{movie.Poster}",
                     movie.People?.FirstOrDefault(p => p.IsAuthor)?.Name,
-                    movie.People?.Select(p => p.Name).ToList(), 
-                    movie.Genres?.Select(g => g.Name).ToList() 
-                )).ToList();
-
-            return movieResponses.Count == 0 ? Ok("Not Found") : movieResponses;
-
-        }
-
-
-        
-        
-        [HttpGet("ByGenre")]
-        public async Task<ActionResult<IEnumerable<MovieResponse>>> GetMovieByGenre([FromQuery] List<string> genres)
-        {
-            var movies = await _context.Movies
-                .Include(m => m.Country)
-                .Include(m => m.People)
-                .Include(m => m.Genres)
-                .ToListAsync();
-
-            List<Movie> filteredMovies = movies
-                .Where(movie => genres.All(searchGenre =>
-                    movie.Genres.Any(genre =>
-                        string.Equals(genre.Name, searchGenre, StringComparison.OrdinalIgnoreCase)))
-                )
+                    movie.People?.Select(p => p.Name).ToList(),
+                    movie.Genres?.Select(g => g.Name).ToList()
+                ))
                 .ToList();
-    
-            var movieResponses = filteredMovies.Select(movie => new MovieResponse(
-                movie.Id,
-                movie.Name,
-                movie.Description,
-                movie.Country?.Name,
-                movie.ReleaseDate,
-                $"{_config.GetSection("Domain").Value}/Uploads/StaticContent/{movie.Poster}",
-                movie.People?.FirstOrDefault(p => p.IsAuthor)?.Name, 
-                movie.People?.Select(p => p.Name).ToList(), 
-                movie.Genres?.Select(g => g.Name).ToList()
-            )).ToList();
 
-            return movieResponses;
+            if (moviesPerPage.Count == 0)
+            {
+                return Ok("Not Found");
+            }
+
+            return moviesPerPage;
         }
-
         
 
         // PUT: api/Movie/5
@@ -238,7 +159,7 @@ namespace MovieAPI.Controllers
                 movie.People.Select(p => p.Name).ToList(),
                 movie.Genres.Select(g => g.Name).ToList());
 
-            return CreatedAtAction("GetMovie", new { id = movie.Id }, response);
+            return Ok(response);
         }
 
 
