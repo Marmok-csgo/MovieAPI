@@ -76,8 +76,27 @@ namespace MovieAPI.Controllers
 
             return moviesPerPage;
         }
-        
 
+        [HttpGet("pagination")]
+
+        public async Task<ActionResult<Pagination>> GetPagination([FromQuery]int page = 1)
+        {
+            int pageSize = 1;
+            int totalMovies = await _context.Movies.CountAsync();
+            
+            var result = new Pagination
+            {
+                Current = page,
+                Total = totalMovies,
+                Next = (page * pageSize < totalMovies) ? Url.Action("GetPagination", new { page = page + 1 }) : null,
+                Previous = (page > 1) ? Url.Action("GetPagination", new { page = page - 1 }) : null
+            };
+
+            return Ok(result);
+        }
+        
+        
+        
         // PUT: api/Movie/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPut("{id}")]
