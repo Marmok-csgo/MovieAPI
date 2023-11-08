@@ -1,7 +1,6 @@
 using FileUpload.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.EntityFrameworkCore;
 using MovieAPI.Models;
 using MovieAPI.Responses;
@@ -62,7 +61,7 @@ namespace MovieAPI.Controllers
 
 
         // GET: api/Movie/5
-        [HttpGet("GetById{id}")]
+        [HttpGet("ById/{id}")]
         public async Task<ActionResult<MovieResponse>> GetMovie(int id)
         {
             var movie = await _context.Movies
@@ -94,8 +93,8 @@ namespace MovieAPI.Controllers
         
         
         
-        [HttpGet("GetByName{name}")]
-        public async Task<ActionResult<IEnumerable<MovieResponse>>> GetMovieByName(string name)
+        [HttpGet("ByName")]
+        public async Task<ActionResult<IEnumerable<MovieResponse>>> GetMovieByName([FromQuery]string name)
         {
             var movies = await _context.Movies
                 .Include(m => m.Country)
@@ -125,8 +124,8 @@ namespace MovieAPI.Controllers
 
         
         
-        [HttpGet("GetByGenre")]
-        public async Task<ActionResult<IEnumerable<MovieResponse>>> GetMovieByGenre([FromQuery] List<string> desiredGenres)
+        [HttpGet("ByGenre")]
+        public async Task<ActionResult<IEnumerable<MovieResponse>>> GetMovieByGenre([FromQuery] List<string> genres)
         {
             var movies = await _context.Movies
                 .Include(m => m.Country)
@@ -135,9 +134,9 @@ namespace MovieAPI.Controllers
                 .ToListAsync();
 
             List<Movie> filteredMovies = movies
-                .Where(movie => desiredGenres.All(desiredGenre =>
+                .Where(movie => genres.All(searchGenre =>
                     movie.Genres.Any(genre =>
-                        string.Equals(genre.Name, desiredGenre, StringComparison.OrdinalIgnoreCase)))
+                        string.Equals(genre.Name, searchGenre, StringComparison.OrdinalIgnoreCase)))
                 )
                 .ToList();
     
