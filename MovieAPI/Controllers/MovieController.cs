@@ -66,8 +66,9 @@ namespace MovieAPI.Controllers
                     movie.ReleaseDate,
                     $"{_config.GetSection("Domain").Value}/Uploads/StaticContent/{movie.Poster}",
                     movie.People?.FirstOrDefault(p => p.IsAuthor)?.Name,
-                    movie.People?.Select(p => p.Name).ToList(),
-                    movie.Genres?.Select(g => g.Name).ToList()
+                    movie.People.Where(p => p.IsAuthor != true).Select(p => p.Name).ToList(),
+                    movie.Genres?.Select(g => g.Name).ToList(),
+                    $"{_config.GetSection("Domain").Value}/Uploads/StaticContent/{movie.Video}"
                 ))
                 .ToList();
             
@@ -162,6 +163,7 @@ namespace MovieAPI.Controllers
             
             
             var fileName = await _iManageImage.UploadFile(request.Poster);
+            var videoName = await _iManageImage.UploadFile(request.Video);
 
             var genres = await _context.Genres.Where(g => request.GenresIds.Contains(g.Id)).ToListAsync();
             var people = await _context.People.Where(p => request.PeopleIds.Contains(p.Id)).ToListAsync();
@@ -176,7 +178,8 @@ namespace MovieAPI.Controllers
                 Genres = genres,
                 People = people,
                 ReleaseDate = request.ReleaseDate,
-                Poster = fileName
+                Poster = fileName,
+                Video = videoName
             };
 
             _context.Movies.Add(movie);
@@ -186,8 +189,9 @@ namespace MovieAPI.Controllers
                 movie.Id, movie.Name, movie.Description, country.Name, movie.ReleaseDate,
                 $"{_config.GetSection("Domain").Value}/Uploads/StaticContent/{movie.Poster}",
                 movie.People.FirstOrDefault(p => p.IsAuthor)?.Name,
-                movie.People.Select(p => p.Name).ToList(),
-                movie.Genres.Select(g => g.Name).ToList());
+                movie.People.Where(p => p.IsAuthor != true).Select(p => p.Name).ToList(),
+                movie.Genres.Select(g => g.Name).ToList(),
+                $"{_config.GetSection("Domain").Value}/Uploads/StaticContent/{movie.Video}");
 
             return Ok(response);
         }

@@ -16,8 +16,11 @@ public class MovieResponse
     public List<string> Artists { get; set; }
     
     public List<string> Genres { get; set; }
+    
+    public string Video { get; set; }
 
-    public MovieResponse(int id, string? name, string? description, string? countryName, DateOnly realeseDate, string? poster, string author, List<string> artists, List<string> genres)
+    public MovieResponse(int id, string? name, string? description, string? countryName, DateOnly realeseDate, string? poster, string author, 
+        List<string> artists, List<string> genres, string video)
     {
         Id = id;
         Name = name;
@@ -28,5 +31,6 @@ public class MovieResponse
         Author = author;
         Artists = artists;
         Genres = genres;
+        Video = video;
     }
 }
