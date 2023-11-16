@@ -27,9 +27,11 @@ namespace MovieAPI.Controllers
         public async Task<ActionResult<MovieAndPaginationResponse>> GetMoviesAndPagination([FromQuery] int page = 1, [FromQuery] string name = null,
             [FromQuery] List<string> genres = null)
         {
-            int pageSize = 1;
+            int pageSize = 2;
             
             var totalMovies = await _context.Movies.CountAsync();
+            
+            var totalPagination = totalMovies / pageSize;
             
             var filteredMovies = await _context.Movies
                 .Include(m => m.Country)
@@ -75,7 +77,7 @@ namespace MovieAPI.Controllers
             var pagination = new Pagination
             {
                 Current = page,
-                Total = totalMovies,
+                Total = totalPagination,
                 Next = (page * pageSize < totalMovies) ? $"{_config.GetSection("Domain").Value}{Url.Action("GetMoviesAndPagination", new { page = page + 1, name, genres })}" : null,
                 Previous = (page > 1) ? $"{_config.GetSection("Domain").Value}{Url.Action("GetMoviesAndPagination", new { page = page - 1, name, genres })}" : null
             };
