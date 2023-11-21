@@ -31,7 +31,7 @@ namespace MovieAPI.Controllers
             
             var totalMovies = await _context.Movies.CountAsync();
             
-            var totalPagination = totalMovies / pageSize;
+            int totalPagination = (int)Math.Ceiling((double)totalMovies / pageSize);
             
             var filteredMovies = await _context.Movies
                 .Include(m => m.Country)
